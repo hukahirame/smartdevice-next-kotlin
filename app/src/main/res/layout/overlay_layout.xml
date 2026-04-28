@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- オーバーレイUI -->
+    <View
+        android:id="@+id/nightUIBlack"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#B3000000" /> <!-- 黒 -->
+
+    <!-- オーバーレイUI -->
+    <View
+        android:id="@+id/nightUIOrange"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#B3120800" /> <!-- オレンジ -->
+
+    <!-- テキスト -->
+    <TextView
+        android:id="@+id/decibelTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="音量: 0dB"
+        android:textColor="@android:color/holo_purple"
+        android:textSize="18sp"
+        android:gravity="start|top"
+        android:layout_gravity="start|top" />
+
+</FrameLayout>

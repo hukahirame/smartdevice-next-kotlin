@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:padding="16dp">
+
+        <!-- スライダー用のラベル -->
+        <TextView
+            android:id="@+id/sliderLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="最大音量（デシベル）"
+            android:gravity="start"
+            android:paddingStart="32dp"/>
+
+        <!--  スライダー -->
+        <com.google.android.material.slider.Slider
+            android:id="@+id/slider"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="32dp"
+            android:layout_marginEnd="32dp"
+            android:valueFrom="30"
+            android:valueTo="70"
+            android:value="50"
+            android:stepSize="1.0" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/AMSStartButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="爆音キャンセラー 起動"
+            android:layout_marginTop="128dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/AMSStopButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="爆音キャンセラー 停止"
+            android:backgroundTint="@color/dark_red"
+            android:layout_marginTop="16dp" />
+</LinearLayout>

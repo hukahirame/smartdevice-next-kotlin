@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:ads="http://schemas.android.com/apk/res-auto"
+
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    android:orientation="vertical">
+
+
+    <!-- スライダー用のラベル -->
+    <TextView
+        android:id="@+id/sliderLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="画面輝度のカット量（％）"
+        android:gravity="start"
+        android:paddingStart="32dp"/>
+
+        <!--     Material Slider によるスライダー -->
+            <com.google.android.material.slider.Slider
+                android:id="@+id/slider"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="32dp"
+                android:layout_marginEnd="32dp"
+                android:valueFrom="10"
+                android:valueTo="70"
+                android:value="50"
+                android:stepSize="5.0" />
+
+    <!-- トグルボタン用のラベル -->
+    <TextView
+        android:id="@+id/toggleButtonLabel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="画面フィルターの色"
+        android:gravity="start"
+        android:paddingStart="32dp"/>
+
+    <!-- トグルボタングループ -->
+    <com.google.android.material.button.MaterialButtonToggleGroup
+        android:id="@+id/toggleButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:singleSelection="true"
+        app:selectionRequired="true">
+        <Button
+            style="?attr/materialButtonOutlinedStyle"
+            android:id="@+id/buttonNormal"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="黒"
+            />
+        <Button
+            style="?attr/materialButtonOutlinedStyle"
+            android:id="@+id/buttonOrange"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="オレンジ"
+            />
+    </com.google.android.material.button.MaterialButtonToggleGroup>
+
+    <!--     MaterialButton によるボタン -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/startButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ナイトディスプレイ 起動"
+            android:layout_marginTop="64dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/stopButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ナイトディスプレイ 停止"
+            android:backgroundTint="@color/dark_red"
+            android:layout_marginTop="32dp" />
+</LinearLayout>
