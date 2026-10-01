@@ -67,7 +67,7 @@ if (!Settings.canDrawOverlays(requireActivity())) {
         binding.slider.addOnChangeListener { _, value: Float, _ ->
             overlayAlpha = value * 10 / 7f / 100f // v% → v'% → 0~1
             sendAlphaToService(overlayAlpha)
-            editor.putInt("overlayValue", value.toInt())
+            editor.putInt("overlayValue", value.toInt()).apply()
         }
         //トグルボタンのリスナー
         binding.toggleButton.addOnButtonCheckedListener { _, checkedId, isChecked ->
