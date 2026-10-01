@@ -107,12 +107,14 @@ if (!Settings.canDrawOverlays(requireActivity())) {
     }
 
     private fun sendAlphaToService(alpha: Float) {
+        if (!OverlayService.isOverlayActive) return // 未起動時はサービスを起動しない
         val intent = Intent(requireContext(), OverlayService::class.java)
         intent.putExtra("alpha", alpha)
         requireContext().startService(intent)
     }
 
     private fun sendNightUIModeToService(mode: String) {
+        if (!OverlayService.isOverlayActive) return // 未起動時はサービスを起動しない
         val intent = Intent(requireContext(), OverlayService::class.java)
         intent.putExtra("nightUI", mode)
         requireContext().startService(intent)

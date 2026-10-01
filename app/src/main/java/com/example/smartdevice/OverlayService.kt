@@ -11,6 +11,7 @@ class OverlayService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        overlay = OverlayComponent(this)
         overlay.createOverlay()
         overlay.showOverlay("OverlayService")
 
