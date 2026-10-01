@@ -10,7 +10,7 @@ androidx_junit = "1.2.1"
 espresso = "3.6.1"
 navigationUi = "2.8.9"
 kotlin = "1.9.24"
-coreKtx = "1.18.0"
+coreKtx = "1.15.0"
 
 [libraries]
 core = { group = "androidx.core", name = "core", version.ref = "core" }
