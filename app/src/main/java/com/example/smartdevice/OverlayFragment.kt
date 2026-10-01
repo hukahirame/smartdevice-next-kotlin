@@ -134,6 +134,8 @@ if (!Settings.canDrawOverlays(requireActivity())) {
             OverlayService::class.java
         )
         intent.putExtra("alpha", overlayAlpha)
+        val mode = if (binding.toggleButton.checkedButtonId == R.id.buttonOrange) "orange" else "normal"
+        intent.putExtra("nightUI", mode)
         ContextCompat.startForegroundService(requireActivity(), intent)
         binding.startButton.isEnabled = false
     }

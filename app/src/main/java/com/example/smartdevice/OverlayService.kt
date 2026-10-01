@@ -38,6 +38,10 @@ class OverlayService : Service() {
         intent?.getFloatExtra("alpha",-1f)?.let { alpha ->
             if(alpha >= 0f) overlay.syncAlpha(alpha)
         }
+        // 通常/暖色の切替
+        intent?.getStringExtra("nightUI")?.let { mode ->
+            overlay.switchNightUI(mode)
+        }
         return START_STICKY
     }
 
