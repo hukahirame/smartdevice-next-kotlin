@@ -19,6 +19,7 @@ import android.media.projection.MediaProjectionManager
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
+import android.provider.Settings
 import android.util.Log
 import androidx.core.content.ContextCompat
 import androidx.core.content.IntentCompat
@@ -48,9 +49,12 @@ class AudioMonitorService : Service() {
         audioManager = getSystemService(AUDIO_SERVICE) as AudioManager
         mediaProjectionManager =
             getSystemService(MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
-        overlay = OverlayComponent(this)
-        overlay!!.createOverlay()
-        overlay!!.showOverlay("AudioMonitorService")
+        // オーバーレイ権限がある場合のみ音量表示を出す（無い場合も減音機能は動かす）
+        if (Settings.canDrawOverlays(this)) {
+            overlay = OverlayComponent(this)
+            overlay!!.createOverlay()
+            overlay!!.showOverlay("AudioMonitorService")
+        }
 
         val filter = IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
         registerReceiver(audioOutputReceiver, filter)
@@ -166,8 +170,10 @@ class AudioMonitorService : Service() {
                     "x: " + 20 * log10(amplitude / 32767.0)
                 )
 
-                Handler(Looper.getMainLooper()).post { //テキスト表示
-                        overlay!!.decibelTextView.text = overlay!!.decibelText(decibel)
+                overlay?.let { ov ->
+                    Handler(Looper.getMainLooper()).post { //テキスト表示
+                        ov.decibelTextView.text = ov.decibelText(decibel)
+                    }
                 }
 
                 if (decibel > thresholdDb) {
