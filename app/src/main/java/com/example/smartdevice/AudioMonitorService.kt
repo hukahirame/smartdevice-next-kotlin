@@ -3,12 +3,10 @@ package com.example.smartdevice
 import android.Manifest
 import android.app.Activity
 import android.app.Service
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.media.AudioAttributes
+import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
 import android.media.AudioFormat
 import android.media.AudioManager
@@ -16,6 +14,7 @@ import android.media.AudioPlaybackCaptureConfiguration
 import android.media.AudioRecord
 import android.media.projection.MediaProjection
 import android.media.projection.MediaProjectionManager
+import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
@@ -34,15 +33,15 @@ class AudioMonitorService : Service() {
     private var overlay: OverlayComponent? = null
     private var audioManager: AudioManager? = null
     private val systemMaxVolume = 70f //本当は85相当だが、暗黙量がある
-    private val audioOutputReceiver: BroadcastReceiver = object : BroadcastReceiver() {
-        override fun onReceive(context: Context, intent: Intent) {
-            if (AudioManager.ACTION_AUDIO_BECOMING_NOISY == intent.action) {
-                deviceType = currentDeviceType()
-                Log.d(TAG, "Audio output is becoming noisy. Update output device info.")
-            }
-        }
+    // 出力デバイスの接続・切断を検知して出力先を再判定する
+    private val audioDeviceCallback = object : AudioDeviceCallback() {
+        override fun onAudioDevicesAdded(addedDevices: Array<out AudioDeviceInfo>) = updateDeviceType()
+        override fun onAudioDevicesRemoved(removedDevices: Array<out AudioDeviceInfo>) = updateDeviceType()
     }
-    private var deviceType = AudioDeviceInfo.TYPE_BUILTIN_SPEAKER
+    private val mainHandler = Handler(Looper.getMainLooper())
+    // 接続直後は音声経路の切替が遅れることがあるため、少し後に再確認する
+    private val recheckDeviceType = Runnable { deviceType = currentDeviceType() }
+    @Volatile private var deviceType = AudioDeviceInfo.TYPE_BUILTIN_SPEAKER
     private var captureThread: Thread? = null
     @Volatile private var adjustTicket = 0 // 自動で下げた音量の段階数（停止時に戻す）
 
@@ -58,9 +57,8 @@ class AudioMonitorService : Service() {
             overlay!!.showOverlay("AudioMonitorService")
         }
 
-        val filter = IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
-        registerReceiver(audioOutputReceiver, filter)
         deviceType = currentDeviceType()
+        audioManager!!.registerAudioDeviceCallback(audioDeviceCallback, mainHandler)
 
         startForeground(1, NotificationComponent().createNotification(this))
         isMonitoring = true
@@ -90,7 +88,8 @@ class AudioMonitorService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         stopAudioCapture()
-        unregisterReceiver(audioOutputReceiver)
+        audioManager?.unregisterAudioDeviceCallback(audioDeviceCallback)
+        mainHandler.removeCallbacks(recheckDeviceType)
         if (overlay != null) {
             overlay!!.hideOverlay("AudioMonitorService")
             overlay!!.destroyOverlay()
@@ -224,25 +223,26 @@ class AudioMonitorService : Service() {
         }.also { it.start() }
     }
 
-    private fun currentDeviceType(): Int {
-        // 出力用デバイス（sink）をすべて取得
-        val devices = audioManager!!.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
-        // 現在選択中または優先される出力デバイスを選ぶ
-        // ※ 複数ある場合には、より適切な選択基準（例えば接続状態やユーザーの選択など）を設ける必要があります。
-        var currentDevice = AudioDeviceInfo.TYPE_BUILTIN_SPEAKER // デフォルトは内蔵スピーカー
-        for (device in devices) {
-            if (device.isSink) {
-                // 簡易的に最初の出力デバイスを取得する例
-                currentDevice = device.type
-                break
-            }
-        }
-        if (currentDevice == AudioDeviceInfo.TYPE_BUILTIN_MIC || currentDevice == AudioDeviceInfo.TYPE_FM_TUNER || currentDevice == AudioDeviceInfo.TYPE_TV_TUNER) {
-            // 入力系デバイスなので、代わりにデフォルトの出力デバイスを使う
-            currentDevice = AudioDeviceInfo.TYPE_BUILTIN_SPEAKER
-        }
+    private fun updateDeviceType() {
+        deviceType = currentDeviceType()
+        Log.d(TAG, "Output device updated: $deviceType")
+        mainHandler.removeCallbacks(recheckDeviceType)
+        mainHandler.postDelayed(recheckDeviceType, 1000)
+    }
 
-        return currentDevice
+    private fun currentDeviceType(): Int {
+        val am = audioManager!!
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // API 33以上：メディア音声が実際に出力されているデバイスをOSから取得
+            val attributes = AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .build()
+            am.getAudioDevicesForAttributes(attributes).firstOrNull()?.let { return it.type }
+        }
+        // API 32以下：接続中の出力デバイスから、メディア音声の優先順位で選ぶ
+        val connected = am.getDevices(AudioManager.GET_DEVICES_OUTPUTS).map { it.type }
+        return MEDIA_OUTPUT_PRIORITY.firstOrNull { it in connected }
+            ?: AudioDeviceInfo.TYPE_BUILTIN_SPEAKER // デフォルトは内蔵スピーカー
     }
 
     private fun stopAudioCapture() {
@@ -281,6 +281,19 @@ class AudioMonitorService : Service() {
         var isMonitoring: Boolean = false
         var thresholdDb: Int = 50
         private const val TAG = "AudioMonitorService"
+
+        // メディア音声の出力先として選ばれる順（受話口・電話回線などは含めない）
+        private val MEDIA_OUTPUT_PRIORITY = listOf(
+            AudioDeviceInfo.TYPE_HEARING_AID,
+            AudioDeviceInfo.TYPE_BLUETOOTH_A2DP,
+            AudioDeviceInfo.TYPE_BLE_HEADSET,
+            AudioDeviceInfo.TYPE_BLE_SPEAKER,
+            AudioDeviceInfo.TYPE_WIRED_HEADPHONES,
+            AudioDeviceInfo.TYPE_WIRED_HEADSET,
+            AudioDeviceInfo.TYPE_USB_HEADSET,
+            AudioDeviceInfo.TYPE_USB_DEVICE,
+            AudioDeviceInfo.TYPE_BUILTIN_SPEAKER
+        )
     }
 }
 
