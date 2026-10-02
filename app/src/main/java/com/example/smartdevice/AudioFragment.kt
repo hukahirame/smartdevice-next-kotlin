@@ -39,6 +39,8 @@ class AudioFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        val pref = requireActivity().getSharedPreferences("SaveData", Context.MODE_PRIVATE)
+
         // MediaProjectionManagerの初期化
         mediaProjectionManager =
             requireActivity().getSystemService(Context.MEDIA_PROJECTION_SERVICE) as MediaProjectionManager
@@ -46,6 +48,7 @@ class AudioFragment : Fragment() {
         // 閾値スライダーのリスナー
         binding.slider.addOnChangeListener{ _, value, _ ->
             AudioMonitorService.thresholdDb = value.toInt()
+            pref.edit().putInt("thresholdDb", value.toInt()).apply()
         }
 
         // 開始ボタンのリスナー
@@ -107,6 +110,9 @@ class AudioFragment : Fragment() {
                 )
             }
         }
+
+        //ロード処理
+        binding.slider.value = pref.getInt("thresholdDb", 50).toFloat()
     }
 
     override fun onResume() {
