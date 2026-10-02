@@ -65,9 +65,14 @@ class AudioMonitorService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        val resultCode = intent?.getIntExtra("resultCode", -1)?: -1
+        // MediaProjectionの許可は再利用できないため、再起動時（intent == null）は停止する
+        if (intent == null) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
+        val resultCode = intent.getIntExtra("resultCode", -1)
         val data = IntentCompat.getParcelableExtra(
-            intent!!, "data",
+            intent, "data",
             Intent::class.java
         )
         if (resultCode == Activity.RESULT_OK && data != null) {
@@ -77,7 +82,7 @@ class AudioMonitorService : Service() {
             stopSelf()
             Log.e(TAG, "Invalid resultCode or data, stopping service.")
         }
-        return START_STICKY
+        return START_NOT_STICKY
     }
 
     override fun onDestroy() {
