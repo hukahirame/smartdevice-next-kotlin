@@ -43,6 +43,8 @@ class AudioMonitorService : Service() {
         }
     }
     private var deviceType = AudioDeviceInfo.TYPE_BUILTIN_SPEAKER
+    private var captureThread: Thread? = null
+    @Volatile private var adjustTicket = 0 // 自動で下げた音量の段階数（停止時に戻す）
 
     override fun onCreate() {
         super.onCreate()
@@ -153,9 +155,8 @@ class AudioMonitorService : Service() {
             return
         }
 
-        Thread {
+        captureThread = Thread {
             val buffer = ShortArray(bufferSize)
-            var adjustTicket = 0
             //android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_AUDIO);
             while (isMonitoring) {
                 val record = audioRecord ?: break
@@ -220,7 +221,7 @@ class AudioMonitorService : Service() {
                     isMonitoring = false
                 }
             }
-        }.start()
+        }.also { it.start() }
     }
 
     private fun currentDeviceType(): Int {
@@ -245,12 +246,23 @@ class AudioMonitorService : Service() {
     }
 
     private fun stopAudioCapture() {
+        // 読み取りスレッドの終了を待ってからAudioRecordを解放する
+        isMonitoring = false
+        captureThread?.join(1000)
+        captureThread = null
         audioRecord?.let {
-            isMonitoring = false
             it.stop()
             it.release()
         }
         audioRecord = null
+        // 自動で下げた分の音量を元に戻す
+        repeat(adjustTicket) {
+            audioManager?.adjustStreamVolume(
+                AudioManager.STREAM_MUSIC,
+                AudioManager.ADJUST_RAISE, 0
+            )
+        }
+        adjustTicket = 0
         mediaProjection?.stop()
         mediaProjection = null
     }
